@@ -187,7 +187,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, quizId }) => {
     
     try {
       // Format answers correctly for the backend
-      const formattedAnswers = answers.map((answer, index) => ({
+      const formattedAnswers = answers.map((answer) => ({
         selectedAnswer: answer,
         timeSpent: 30 // Default time per question
       }));
@@ -332,26 +332,26 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, quizId }) => {
 
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {leaderboard.length > 0 ? (
-                  leaderboard.map((entry, index) => (
+                  leaderboard.map((entry, entryIndex) => (
                     <div
-                      key={index}
+                      key={entryIndex}
                       className={cn(
                         "flex items-center justify-between p-3 rounded-lg border",
-                        index === 0 ? "bg-yellow-50 border-yellow-200" :
-                        index === 1 ? "bg-gray-50 border-gray-200" :
-                        index === 2 ? "bg-orange-50 border-orange-200" :
+                        entryIndex === 0 ? "bg-yellow-50 border-yellow-200" :
+                        entryIndex === 1 ? "bg-gray-50 border-gray-200" :
+                        entryIndex === 2 ? "bg-orange-50 border-orange-200" :
                         "bg-white border-gray-100"
                       )}
                     >
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                          index === 0 ? "bg-yellow-500 text-white" :
-                          index === 1 ? "bg-gray-500 text-white" :
-                          index === 2 ? "bg-orange-500 text-white" :
+                          entryIndex === 0 ? "bg-yellow-500 text-white" :
+                          entryIndex === 1 ? "bg-gray-500 text-white" :
+                          entryIndex === 2 ? "bg-orange-500 text-white" :
                           "bg-blue-100 text-blue-700"
                         )}>
-                          {index + 1}
+                          {entryIndex + 1}
                         </div>
                         <div>
                           <div className="font-medium text-gray-900">

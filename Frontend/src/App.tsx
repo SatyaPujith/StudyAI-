@@ -35,7 +35,6 @@ const AppContent = () => {
     <div className="min-h-screen bg-white">
       <Navigation
         onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-        sidebarOpen={sidebarOpen}
         onSectionChange={setActiveSection}
       />
 

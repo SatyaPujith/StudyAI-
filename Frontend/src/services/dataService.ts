@@ -81,7 +81,8 @@ class DataService {
   private handleError(error: unknown, context: string): void {
     console.error(`${context}:`, error);
     if (error && typeof error === 'object' && 'response' in error) {
-      console.error('Error details:', (error as any).response?.data);
+      const axiosError = error as { response?: { data?: any } };
+      console.error('Error details:', axiosError.response?.data);
     }
   }
 
@@ -160,8 +161,9 @@ class DataService {
       return response.data.quiz;
     } catch (error) {
       console.error('DataService: Error creating manual quiz:', error);
-      if (error.response) {
-        console.error('DataService: Error response:', error.response.data);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: any } };
+        console.error('DataService: Error response:', axiosError.response?.data);
       }
       throw error; // Re-throw to let the component handle it
     }

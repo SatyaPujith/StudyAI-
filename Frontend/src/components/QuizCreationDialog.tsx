@@ -18,7 +18,6 @@ const QuizCreationDialog: React.FC<QuizCreationDialogProps> = ({
   open,
   onClose,
   topic,
-  difficulty,
   onCreateQuiz,
   creating
 }) => {

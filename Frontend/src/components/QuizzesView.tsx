@@ -273,7 +273,6 @@ const QuizzesView: React.FC<QuizzesViewProps> = ({ onStartQuiz }) => {
           difficulty={newQuizDifficulty}
           isPublic={true}
           onBack={() => setShowManualBuilder(false)}
-          onClose={() => setShowManualBuilder(false)}
           onSave={handleManualQuizSave}
         />
       )}

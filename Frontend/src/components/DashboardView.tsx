@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import CreateStudyPlanButton from './CreateStudyPlanButton';
 import StudyPlansView from './StudyPlansView';
 import dataService from '../services/dataService';
-import { PlayCircle, TrendingUp, Clock, Target, BookOpen, Brain, Upload } from 'lucide-react';
+import { PlayCircle, TrendingUp, Clock, Target, BookOpen, Brain } from 'lucide-react';
 
 interface DashboardViewProps {
   onStartQuiz: (quizId: string) => void;
@@ -57,11 +57,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ onStartQuiz }) => {
     }
   };
 
-  // Function to refresh data (can be called from child components)
-  const refreshData = () => {
-    setLoading(true);
-    loadUserStats();
-  };
+
 
   if (loading) {
     return (

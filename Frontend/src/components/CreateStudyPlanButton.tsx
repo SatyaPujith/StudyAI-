@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import SimpleCreateStudyPlanModal from './SimpleCreateStudyPlanModal';
 
 const CreateStudyPlanButton: React.FC = () => {

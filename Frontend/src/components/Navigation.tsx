@@ -7,11 +7,10 @@ import { Menu, Settings, LogOut, User } from 'lucide-react';
 
 interface NavigationProps {
   onMenuClick: () => void;
-  sidebarOpen: boolean;
   onSectionChange: (section: string) => void;
 }
 
-const Navigation: React.FC<NavigationProps> = ({ onMenuClick, sidebarOpen, onSectionChange }) => {
+const Navigation: React.FC<NavigationProps> = ({ onMenuClick, onSectionChange }) => {
   const { user, logout } = useAuth();
 
   const getInitials = (firstName?: string, lastName?: string) => {
@@ -32,7 +31,7 @@ const Navigation: React.FC<NavigationProps> = ({ onMenuClick, sidebarOpen, onSec
             >
               <Menu className="h-5 w-5 text-gray-700" />
             </Button>
-            
+
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-black tracking-tight">
                 StudyAI
@@ -41,15 +40,15 @@ const Navigation: React.FC<NavigationProps> = ({ onMenuClick, sidebarOpen, onSec
           </div>
 
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               className="hover:bg-gray-50"
               onClick={() => onSectionChange('settings')}
             >
               <Settings className="h-5 w-5 text-gray-700" />
             </Button>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
