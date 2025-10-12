@@ -6,6 +6,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { CheckCircle2, ArrowRight, RotateCcw, Trophy, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
 interface QuizModalProps {
   open: boolean;
   onClose: () => void;
@@ -54,7 +56,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, quizId }) => {
     
     try {
       // Check if user has already completed this quiz
-      const response = await fetch(`http://localhost:5001/api/study/quizzes/${quizId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/study/quizzes/${quizId}/status`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -87,7 +89,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, quizId }) => {
   const ensureQuizParticipation = async (quizId: string) => {
     try {
       // Try to join the quiz as a participant
-      await fetch(`http://localhost:5001/api/study/quizzes/join`, {
+      await fetch(`${API_BASE_URL}/study/quizzes/join`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,7 +99,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, quizId }) => {
       });
       
       // Try to start the quiz
-      await fetch(`http://localhost:5001/api/study/quizzes/${quizId}/start`, {
+      await fetch(`${API_BASE_URL}/study/quizzes/${quizId}/start`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +116,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, quizId }) => {
     
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5001/api/study/quizzes/${quizId}/take`, {
+      const response = await fetch(`${API_BASE_URL}/study/quizzes/${quizId}/take`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -167,7 +169,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, quizId }) => {
 
   const loadLeaderboard = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/study/quizzes/${quizId}/leaderboard`, {
+      const response = await fetch(`${API_BASE_URL}/study/quizzes/${quizId}/leaderboard`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -192,7 +194,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, quizId }) => {
         timeSpent: 30 // Default time per question
       }));
 
-      const response = await fetch(`http://localhost:5001/api/study/quizzes/${quizId}/submit`, {
+      const response = await fetch(`${API_BASE_URL}/study/quizzes/${quizId}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
