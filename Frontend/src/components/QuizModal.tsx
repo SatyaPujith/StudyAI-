@@ -104,10 +104,8 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, quizId }) => {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
-      
-      console.log('Quiz participation and start ensured');
     } catch (error) {
-      console.log('Quiz participation/start may already be set:', error);
+      // Quiz participation/start may already be set
     }
   };
 
@@ -208,11 +206,9 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, quizId }) => {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Quiz results submitted:', data);
         // Update score with actual backend response (convert percentage to raw score)
         const rawScore = Math.round((data.percentage || 0) * quiz.questions.length / 100);
         setScore(rawScore);
-        console.log(`Quiz completed: ${rawScore}/${quiz.questions.length} (${data.percentage}%)`);
         
         // Show success message
         const { toast } = await import('sonner');

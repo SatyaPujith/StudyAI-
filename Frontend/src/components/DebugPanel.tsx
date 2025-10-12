@@ -41,7 +41,6 @@ const DebugPanel: React.FC = () => {
         withCredentials: true
       };
 
-      console.log('Making request with config:', config);
       toast.info('Sending request...');
       
       try {

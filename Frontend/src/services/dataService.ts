@@ -88,9 +88,7 @@ class DataService {
   // Study Plans
   async getStudyPlans(): Promise<StudyPlan[]> {
     try {
-      console.log('Fetching study plans from API...');
       const response = await studyAPI.getStudyPlans();
-      console.log('API response:', response.data);
       return response.data.studyPlans || [];
     } catch (error) {
       this.handleError(error, 'Error fetching study plans');
@@ -158,9 +156,7 @@ class DataService {
     isPublic?: boolean;
   }): Promise<Quiz | null> {
     try {
-      console.log('DataService: Creating manual quiz with data:', data);
       const response = await studyAPI.createManualQuiz(data);
-      console.log('DataService: Manual quiz response:', response.data);
       return response.data.quiz;
     } catch (error) {
       console.error('DataService: Error creating manual quiz:', error);

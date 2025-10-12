@@ -34,12 +34,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({ onStartQuiz }) => {
 
   const loadUserStats = async () => {
     try {
-      console.log('Loading user stats...');
       const studyPlans = await dataService.getStudyPlans();
       const quizAttempts = await dataService.getQuizAttempts();
-      
-      console.log('Study plans loaded:', studyPlans.length);
-      console.log('Quiz attempts loaded:', quizAttempts.length);
       
       // Calculate stats from actual data
       const totalStudyTime = 0; // This would come from actual study session tracking
@@ -163,7 +159,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ onStartQuiz }) => {
 
       {/* Study Plans Section - Show if has study plan */}
       {stats.hasStudyPlan && (
-        <StudyPlansView preview={true} />
+        <StudyPlansView />
       )}
 
       {/* Quick Quiz Practice - Only show if has study plan */}

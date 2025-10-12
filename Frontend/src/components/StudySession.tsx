@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import {
   BookOpen,
   CheckCircle,
@@ -15,9 +15,11 @@ import {
   Video,
   Link,
   Brain,
-  Target
+  Target,
+  Menu,
+  X
 } from 'lucide-react';
-import dataService from '../services/dataService';
+
 import { toast } from 'sonner';
 
 interface StudySessionProps {
@@ -36,7 +38,7 @@ interface StudyContent {
     overview: string;
     keyPoints: string[];
     examples: string[];
-    exercises: string[];
+    exercises: (string | { title: string; description: string })[];
   };
   resources: {
     type: 'video' | 'article' | 'book' | 'practice' | 'quiz';
@@ -73,6 +75,7 @@ const StudySession: React.FC<StudySessionProps> = ({
     answers: [],
     score: 0
   });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     loadStudyContent();
@@ -143,7 +146,6 @@ const StudySession: React.FC<StudySessionProps> = ({
       setLoading(true);
 
       // First, try to get existing content
-      console.log('StudySession: Checking for existing content...');
       const existingContentUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/study/plans/${studyPlanId}/days/${topicId}/content`;
 
       try {
@@ -156,18 +158,16 @@ const StudySession: React.FC<StudySessionProps> = ({
         if (existingResponse.ok) {
           const existingData = await existingResponse.json();
           if (existingData.success && existingData.content && existingData.content.overview) {
-            console.log('StudySession: Found existing content, using it');
             setContentFromAPI(existingData);
             setLoading(false);
             return;
           }
         }
       } catch (existingError) {
-        console.log('StudySession: No existing content found, will generate new content');
+        // No existing content found, will generate new content
       }
 
       // No existing content found, generate new AI content
-      console.log('StudySession: 🤖 Generating fresh AI content...');
       toast.info('🤖 Generating personalized study content with AI...', { duration: 3000 });
 
       const generateUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/study/plans/${studyPlanId}/days/${topicId}/generate-content`;
@@ -182,7 +182,6 @@ const StudySession: React.FC<StudySessionProps> = ({
 
       if (generateResponse.ok) {
         const data = await generateResponse.json();
-        console.log('StudySession: AI content generated:', data);
 
         if (data.success && data.content) {
           setContentFromAPI(data);
@@ -297,7 +296,7 @@ In this session, you'll explore core principles, understand key terminology, and
     try {
       const exerciseTitle = typeof exercise === 'object' ? exercise.title : `Exercise ${index + 1}`;
       const subject = content?.title || 'General';
-      
+
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/study/exercises/questions`, {
         method: 'POST',
         headers: {
@@ -359,11 +358,33 @@ In this session, you'll explore core principles, understand key terminology, and
 
   const handleCompleteStudy = async () => {
     try {
+      // End the current study session
       await endStudySession(true);
-      await onComplete();
-      toast.success('Study session completed! Great job!');
-      onClose();
+      
+      // Update the study plan progress
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/study/plans/${studyPlanId}/days/${topicId}/progress`;
+      const progressResponse = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          status: 'completed',
+          timeSpent: studyTime,
+          sectionsCompleted: Array.from(completedSections)
+        })
+      });
+
+      if (progressResponse.ok) {
+        toast.success('Study session completed! Great job!');
+        onComplete(); // This will refresh the study plans view
+        onClose();
+      } else {
+        throw new Error('Failed to update progress');
+      }
     } catch (error) {
+      console.error('Error completing study session:', error);
       toast.error('Failed to mark as complete');
     }
   };
@@ -418,31 +439,38 @@ In this session, you'll explore core principles, understand key terminology, and
   const progress = (completedSections.size / sections.length) * 100;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        <CardHeader className="border-b">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 md:p-4">
+      <Card className="w-full max-w-4xl max-h-[95vh] md:max-h-[90vh] overflow-hidden">
+        <CardHeader className="border-b p-3 md:p-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={onClose}>
+            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+              <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div>
-                <CardTitle className="text-lg">{content.title}</CardTitle>
-                <p className="text-sm text-gray-600">{content.description}</p>
+              <div className="min-w-0 flex-1">
+                <CardTitle className="text-base md:text-lg truncate">{content.title}</CardTitle>
+                <p className="text-sm text-gray-600 hidden md:block">{content.description}</p>
+                {/* Mobile section indicator */}
+                <div className="md:hidden mt-1">
+                  <Badge variant="outline" className="text-xs">
+                    {sections[currentSection]?.title}
+                  </Badge>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 shrink-0">
               <div className="text-sm text-gray-600">
                 <Clock className="h-4 w-4 inline mr-1" />
-                {formatTime(studyTime)}
+                <span className="hidden sm:inline">{formatTime(studyTime)}</span>
+                <span className="sm:hidden">{Math.floor(studyTime / 60)}m</span>
               </div>
-              <Badge variant="outline">
+              <Badge variant="outline" className="hidden md:inline-flex text-xs">
                 {content.difficulty}
               </Badge>
             </div>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-3 md:mt-4">
             <div className="flex justify-between text-sm mb-2">
               <span>Progress</span>
               <span>{Math.round(progress)}% Complete</span>
@@ -451,10 +479,51 @@ In this session, you'll explore core principles, understand key terminology, and
           </div>
         </CardHeader>
 
-        <CardContent className="p-0 overflow-y-auto max-h-[calc(90vh-200px)]">
-          <div className="flex">
-            {/* Sidebar Navigation */}
-            <div className="w-64 border-r bg-gray-50 p-4">
+        <CardContent className="p-0 overflow-y-auto max-h-[calc(95vh-180px)] md:max-h-[calc(90vh-200px)]">
+          <div className="flex relative">
+            {/* Mobile Menu Button */}
+            <div className="md:hidden absolute top-3 left-3 z-10">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="bg-white shadow-md"
+              >
+                {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              </Button>
+            </div>
+
+            {/* Mobile Bottom Navigation */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-2 z-30">
+              <div className="flex justify-center space-x-1 overflow-x-auto">
+                {sections.map((section) => {
+                  const Icon = section.icon;
+                  const isCompleted = completedSections.has(section.id);
+                  const isCurrent = currentSection === section.id;
+
+                  return (
+                    <button
+                      key={section.id}
+                      onClick={() => setCurrentSection(section.id)}
+                      className={`flex flex-col items-center p-2 rounded-lg min-w-[60px] transition-colors ${
+                        isCurrent
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4 mb-1" />
+                      <span className="text-xs truncate">{section.title}</span>
+                      {isCompleted && (
+                        <CheckCircle className="h-3 w-3 text-green-600 absolute -top-1 -right-1" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Desktop Sidebar Navigation */}
+            <div className="hidden md:block w-64 border-r bg-gray-50 p-4">
               <nav className="space-y-2">
                 {sections.map((section) => {
                   const Icon = section.icon;
@@ -465,10 +534,11 @@ In this session, you'll explore core principles, understand key terminology, and
                     <button
                       key={section.id}
                       onClick={() => setCurrentSection(section.id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${isCurrent
-                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                        : 'hover:bg-gray-100'
-                        }`}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
+                        isCurrent
+                          ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                          : 'hover:bg-gray-100'
+                      }`}
                     >
                       <Icon className="h-4 w-4" />
                       <span className="flex-1">{section.title}</span>
@@ -482,7 +552,7 @@ In this session, you'll explore core principles, understand key terminology, and
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-3 md:p-6 pt-12 md:pt-6 pb-20 md:pb-6">
               {currentSection === 0 && (
                 <div className="space-y-4">
                   <h3 className="text-xl font-semibold">Overview</h3>
@@ -561,8 +631,8 @@ In this session, you'll explore core principles, understand key terminology, and
                               {typeof exercise === 'object' ? exercise.description : exercise}
                             </p>
                           </div>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => startExercise(exercise, index)}
                           >
@@ -609,9 +679,9 @@ In this session, you'll explore core principles, understand key terminology, and
                               <div className="flex-1">
                                 <h4 className="font-medium">{resource.title}</h4>
                                 <p className="text-sm text-gray-600 mt-1">{resource.description}</p>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   className="mt-2"
                                   onClick={() => window.open(resource.url, '_blank')}
                                 >
@@ -637,34 +707,69 @@ In this session, you'll explore core principles, understand key terminology, and
           </div>
         </CardContent>
 
-        <div className="border-t p-4 flex justify-between items-center">
-          <div className="flex gap-2">
+        <div className="border-t p-3 md:p-4 pb-20 md:pb-4">
+          {/* Desktop Footer */}
+          <div className="hidden md:flex justify-between items-center">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentSection(Math.max(0, currentSection - 1))}
+                disabled={currentSection === 0}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentSection(Math.min(sections.length - 1, currentSection + 1))}
+                disabled={currentSection === sections.length - 1}
+              >
+                Next
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+
             <Button
-              variant="outline"
-              onClick={() => setCurrentSection(Math.max(0, currentSection - 1))}
-              disabled={currentSection === 0}
+              onClick={handleCompleteStudy}
+              disabled={completedSections.size < sections.length}
+              className="bg-green-600 hover:bg-green-700"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setCurrentSection(Math.min(sections.length - 1, currentSection + 1))}
-              disabled={currentSection === sections.length - 1}
-            >
-              Next
-              <ArrowRight className="h-4 w-4 ml-2" />
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Complete Study Session
             </Button>
           </div>
 
-          <Button
-            onClick={handleCompleteStudy}
-            disabled={completedSections.size < sections.length}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Complete Study Session
-          </Button>
+          {/* Mobile Footer */}
+          <div className="md:hidden space-y-3">
+            <div className="flex gap-2 justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentSection(Math.max(0, currentSection - 1))}
+                disabled={currentSection === 0}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentSection(Math.min(sections.length - 1, currentSection + 1))}
+                disabled={currentSection === sections.length - 1}
+              >
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <Button
+              onClick={handleCompleteStudy}
+              disabled={completedSections.size < sections.length}
+              className="w-full bg-green-600 hover:bg-green-700"
+              size="sm"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Complete Study Session
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -675,8 +780,8 @@ In this session, you'll explore core principles, understand key terminology, and
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold">
-                  {typeof exerciseModal.exercise === 'object' 
-                    ? exerciseModal.exercise.title 
+                  {typeof exerciseModal.exercise === 'object'
+                    ? exerciseModal.exercise.title
                     : 'Practice Exercise'}
                 </h3>
                 <Button
@@ -689,8 +794,8 @@ In this session, you'll explore core principles, understand key terminology, and
               </div>
               {exerciseModal.questions.length > 0 && (
                 <div className="mt-4">
-                  <Progress 
-                    value={(exerciseModal.currentQuestion / exerciseModal.questions.length) * 100} 
+                  <Progress
+                    value={(exerciseModal.currentQuestion / exerciseModal.questions.length) * 100}
                     className="h-2"
                   />
                   <p className="text-sm text-gray-600 mt-2">
@@ -716,11 +821,10 @@ In this session, you'll explore core principles, understand key terminology, and
                             newAnswers[exerciseModal.currentQuestion] = index;
                             setExerciseModal(prev => ({ ...prev, answers: newAnswers }));
                           }}
-                          className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                            exerciseModal.answers[exerciseModal.currentQuestion] === index
+                          className={`w-full text-left p-3 rounded-lg border transition-colors ${exerciseModal.answers[exerciseModal.currentQuestion] === index
                               ? 'bg-blue-50 border-blue-200 text-blue-800'
                               : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                          }`}
+                            }`}
                         >
                           <span className="font-medium mr-3">{String.fromCharCode(65 + index)}.</span>
                           {option}
@@ -730,9 +834,9 @@ In this session, you'll explore core principles, understand key terminology, and
                     <div className="flex justify-between pt-4">
                       <Button
                         variant="outline"
-                        onClick={() => setExerciseModal(prev => ({ 
-                          ...prev, 
-                          currentQuestion: Math.max(0, prev.currentQuestion - 1) 
+                        onClick={() => setExerciseModal(prev => ({
+                          ...prev,
+                          currentQuestion: Math.max(0, prev.currentQuestion - 1)
                         }))}
                         disabled={exerciseModal.currentQuestion === 0}
                       >
@@ -745,15 +849,15 @@ In this session, you'll explore core principles, understand key terminology, and
                             const correctAnswers = exerciseModal.answers.reduce((score, answer, index) => {
                               return score + (answer === exerciseModal.questions[index].correctAnswer ? 1 : 0);
                             }, 0);
-                            setExerciseModal(prev => ({ 
-                              ...prev, 
+                            setExerciseModal(prev => ({
+                              ...prev,
                               score: correctAnswers,
-                              currentQuestion: prev.currentQuestion + 1 
+                              currentQuestion: prev.currentQuestion + 1
                             }));
                           } else {
-                            setExerciseModal(prev => ({ 
-                              ...prev, 
-                              currentQuestion: prev.currentQuestion + 1 
+                            setExerciseModal(prev => ({
+                              ...prev,
+                              currentQuestion: prev.currentQuestion + 1
                             }));
                           }
                         }}

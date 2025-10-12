@@ -9,10 +9,20 @@ interface SimpleCreateStudyPlanModalProps {
   onSuccess?: () => void;
 }
 
-const SimpleCreateStudyPlanModal: React.FC<SimpleCreateStudyPlanModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onSuccess 
+interface StudyPlanData {
+  subject: string;
+  level: string;
+  duration: string;
+  learningStyle: string;
+  goals: string[];
+  syllabus?: string;
+  description?: string;
+}
+
+const SimpleCreateStudyPlanModal: React.FC<SimpleCreateStudyPlanModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess
 }) => {
   const [formData, setFormData] = useState({
     subject: '',
@@ -26,7 +36,7 @@ const SimpleCreateStudyPlanModal: React.FC<SimpleCreateStudyPlanModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.subject || !formData.level || !formData.duration || !formData.learningStyle) {
       toast.error('Please fill in all required fields');
       return;
@@ -46,7 +56,7 @@ const SimpleCreateStudyPlanModal: React.FC<SimpleCreateStudyPlanModalProps> = ({
         formDataObj.append('level', formData.level);
         formDataObj.append('duration', formData.duration);
         formDataObj.append('learningStyle', formData.learningStyle);
-        
+
         // Add description if provided
         if (formData.description.trim()) {
           formDataObj.append('description', formData.description);
@@ -57,7 +67,7 @@ const SimpleCreateStudyPlanModal: React.FC<SimpleCreateStudyPlanModalProps> = ({
         studyPlan = response.data.studyPlan;
       } else {
         // Create study plan from manual input
-        const studyPlanData = {
+        const studyPlanData: StudyPlanData = {
           subject: formData.subject,
           level: formData.level,
           duration: formData.duration,
@@ -78,7 +88,7 @@ const SimpleCreateStudyPlanModal: React.FC<SimpleCreateStudyPlanModalProps> = ({
 
       if (studyPlan) {
         toast.success('Study plan generated successfully!');
-        
+
         // Reset form
         setFormData({
           subject: '',
@@ -88,7 +98,7 @@ const SimpleCreateStudyPlanModal: React.FC<SimpleCreateStudyPlanModalProps> = ({
           description: ''
         });
         setUploadedFiles([]);
-        
+
         onClose();
         if (onSuccess) onSuccess();
       } else {
@@ -146,7 +156,7 @@ const SimpleCreateStudyPlanModal: React.FC<SimpleCreateStudyPlanModalProps> = ({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
+
             {/* Left Column */}
             <div className="space-y-4">
               {/* Subject */}
@@ -261,7 +271,7 @@ const SimpleCreateStudyPlanModal: React.FC<SimpleCreateStudyPlanModalProps> = ({
                   <Upload className="w-4 h-4 mr-2" />
                   Upload Materials (optional)
                 </h3>
-                
+
                 {uploadedFiles.length === 0 ? (
                   <div>
                     <input

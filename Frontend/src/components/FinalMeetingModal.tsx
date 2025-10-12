@@ -104,7 +104,7 @@ const FinalMeetingModal: React.FC<FinalMeetingModalProps> = ({
                 checked: true
             });
         } catch (error) {
-            console.log('Permission check not supported:', error);
+            // Permission check not supported
             setMediaPermissions({
                 camera: false,
                 microphone: false,

@@ -127,68 +127,86 @@ Day: ${day}
 Syllabus Section: ${syllabusSection}
 Keywords: ${keywords.join(', ')}
 
-Create detailed educational content with the following sections:
+CRITICAL: Return ONLY valid JSON. No markdown, no code blocks, no extra text.
 
-IMPORTANT FORMATTING RULES:
-- Use clean, readable text WITHOUT asterisks (*) or markdown formatting
-- Write in clear, professional language
-- For exercises, create specific subtopics that can become interactive questions
-- Make content engaging and educational
+Create detailed educational content with these exact sections:
 
-1. OVERVIEW (200+ words): Comprehensive introduction explaining what students will learn
-2. KEY POINTS (5-7 detailed points): Each point should be a complete explanation (50+ words)
-3. EXAMPLES (4-5 detailed examples): Real-world, practical examples with explanations (100+ words each)
-4. EXERCISES (5-8 practical exercises): Interactive exercise topics with descriptions
-5. RESOURCES (3-5 resources): Specific learning materials with working links
-
-Return ONLY a valid JSON object:
 {
-  "overview": "Comprehensive overview in clean text without asterisks or formatting...",
+  "overview": "Write a comprehensive 200+ word introduction explaining what students will learn in this session. Use clear, professional language without asterisks or markdown formatting.",
   "keyPoints": [
-    "Detailed explanation of first concept in plain text...",
-    "Comprehensive description of second concept without formatting..."
+    "First key concept explanation in plain text (50+ words)",
+    "Second key concept explanation in plain text (50+ words)",
+    "Third key concept explanation in plain text (50+ words)",
+    "Fourth key concept explanation in plain text (50+ words)",
+    "Fifth key concept explanation in plain text (50+ words)"
   ],
   "examples": [
-    "Detailed real-world example with clear explanation...",
-    "Specific case study with practical context..."
+    "First detailed real-world example with clear explanation (100+ words)",
+    "Second practical example with context and application (100+ words)",
+    "Third specific case study with detailed walkthrough (100+ words)",
+    "Fourth example showing practical implementation (100+ words)"
   ],
   "exercises": [
     {
-      "title": "Specific Exercise Topic Name",
-      "description": "Clear description of what this exercise covers and what students will learn",
+      "title": "Exercise 1 Title",
+      "description": "Clear description of what this exercise covers",
       "type": "quiz"
     },
     {
-      "title": "Another Practical Exercise Topic",
-      "description": "Description of this hands-on exercise and its learning objectives",
+      "title": "Exercise 2 Title", 
+      "description": "Description of this hands-on exercise",
       "type": "practice"
+    },
+    {
+      "title": "Exercise 3 Title",
+      "description": "Description of this practical exercise", 
+      "type": "project"
     }
   ],
   "resources": [
     {
-      "type": "video", 
-      "title": "Specific Video Title", 
+      "type": "video",
+      "title": "Video Resource Title",
       "description": "What this video covers and why it's useful",
-      "url": "working_url_will_be_generated"
+      "url": "placeholder_url"
     },
     {
-      "type": "article", 
-      "title": "Comprehensive Guide Title", 
-      "description": "In-depth article description and learning value",
-      "url": "working_url_will_be_generated"
+      "type": "article",
+      "title": "Article Resource Title", 
+      "description": "In-depth article description",
+      "url": "placeholder_url"
+    },
+    {
+      "type": "practice",
+      "title": "Practice Resource Title",
+      "description": "Hands-on practice description", 
+      "url": "placeholder_url"
     }
   ]
-}`;
+}
 
-    const result = await this.generateContent(prompt, { maxTokens: 4000 });
+IMPORTANT: Return ONLY the JSON object above with actual content. No markdown formatting, no code blocks, no extra text.`;
+
+    const result = await this.generateContent(prompt, { maxTokens: 3000, temperature: 0.3 });
     
     if (result.success) {
       try {
-        let content = result.content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          content = jsonMatch[0];
+        // Clean the response more thoroughly
+        let content = result.content
+          .replace(/```json\n?/g, '')
+          .replace(/```\n?/g, '')
+          .replace(/^[^{]*/, '') // Remove any text before the first {
+          .replace(/[^}]*$/, '') // Remove any text after the last }
+          .trim();
+        
+        // Find the JSON object
+        const jsonStart = content.indexOf('{');
+        const jsonEnd = content.lastIndexOf('}') + 1;
+        
+        if (jsonStart !== -1 && jsonEnd > jsonStart) {
+          content = content.substring(jsonStart, jsonEnd);
         }
+        
         let dailyContent = JSON.parse(content);
         
         // Clean up any remaining asterisks or markdown formatting

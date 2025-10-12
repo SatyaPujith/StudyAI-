@@ -2,38 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  BookOpen, 
-  ChevronDown, 
-  ChevronRight, 
+import {
+  BookOpen,
+  ChevronDown,
+  ChevronRight,
   Calendar,
   Clock,
-  Target,
   Play,
   CheckCircle,
   Circle
 } from 'lucide-react';
 import StudySession from './StudySession';
 import CreateStudyPlanButton from './CreateStudyPlanButton';
-import dataService from '../services/dataService';
+import dataService, { StudyPlan } from '../services/dataService';
 import { toast } from 'sonner';
 
-interface StudyPlan {
-  _id: string;
-  title: string;
-  subject: string;
-  level: string;
-  duration: string;
-  createdAt: string;
-  topics?: any[];
-  dailyContent?: any[];
-}
-
 interface StudyPlansViewProps {
-  preview?: boolean;
+  // Removed unused preview prop
 }
 
-const StudyPlansView: React.FC<StudyPlansViewProps> = ({ preview = false }) => {
+const StudyPlansView: React.FC<StudyPlansViewProps> = () => {
   const [studyPlans, setStudyPlans] = useState<StudyPlan[]>([]);
   const [expandedPlans, setExpandedPlans] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -50,8 +38,9 @@ const StudyPlansView: React.FC<StudyPlansViewProps> = ({ preview = false }) => {
     try {
       setLoading(true);
       const plans = await dataService.getStudyPlans();
+
       setStudyPlans(plans || []);
-      
+
       // Auto-expand the first plan if there are any
       if (plans && plans.length > 0) {
         setExpandedPlans(new Set([plans[0]._id]));
@@ -80,13 +69,32 @@ const StudyPlansView: React.FC<StudyPlansViewProps> = ({ preview = false }) => {
 
   const getDaysFromPlan = (plan: StudyPlan) => {
     if (plan.dailyContent && plan.dailyContent.length > 0) {
-      return plan.dailyContent.map((day, index) => ({
-        id: day.day?.toString() || `day-${index + 1}`,
-        title: `Day ${day.day || index + 1}`,
-        description: day.title || `Study session for day ${day.day || index + 1}`,
-        status: index === 0 ? 'in_progress' : 'upcoming',
-        estimatedTime: Math.ceil((day.totalTime || 90) / 60)
-      }));
+
+      return plan.dailyContent.map((day, index) => {
+        // Use the actual status from the backend, with fallback logic
+        let dayStatus = day.status || 'not_started';
+        
+        // If no status is set, determine based on position and completion
+        if (!day.status) {
+          if (index === 0) {
+            dayStatus = 'in_progress';
+          } else {
+            // Check if previous days are completed to determine if this day should be available
+            const previousDaysCompleted = plan.dailyContent!.slice(0, index).every(prevDay => 
+              prevDay.status === 'completed'
+            );
+            dayStatus = previousDaysCompleted ? 'in_progress' : 'upcoming';
+          }
+        }
+        
+        return {
+          id: day.day?.toString() || `day-${index + 1}`,
+          title: `Day ${day.day || index + 1}`,
+          description: day.title || `Study session for day ${day.day || index + 1}`,
+          status: dayStatus,
+          estimatedTime: Math.ceil((day.totalTime || 90) / 60)
+        };
+      });
     } else if (plan.topics && plan.topics.length > 0) {
       return plan.topics.map((topic, index) => ({
         id: topic._id || `topic-${index}`,
@@ -96,8 +104,8 @@ const StudyPlansView: React.FC<StudyPlansViewProps> = ({ preview = false }) => {
         estimatedTime: Math.ceil((topic.estimatedTime || 90) / 60)
       }));
     } else {
-      // Generate default days based on duration
-      const durationDays = getDurationInDays(plan.duration);
+      // Generate default days based on estimated duration
+      const durationDays = plan.estimatedDuration || 7;
       return Array.from({ length: Math.min(durationDays, 30) }, (_, index) => ({
         id: `day-${index + 1}`,
         title: `Day ${index + 1}`,
@@ -108,12 +116,7 @@ const StudyPlansView: React.FC<StudyPlansViewProps> = ({ preview = false }) => {
     }
   };
 
-  const getDurationInDays = (duration: string) => {
-    if (duration.includes('day')) return parseInt(duration) || 1;
-    if (duration.includes('week')) return (parseInt(duration) || 1) * 7;
-    if (duration.includes('month')) return (parseInt(duration) || 1) * 30;
-    return 7; // default
-  };
+
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -170,7 +173,7 @@ const StudyPlansView: React.FC<StudyPlansViewProps> = ({ preview = false }) => {
           <h2 className="text-2xl font-bold text-gray-900">Study Plans</h2>
           <CreateStudyPlanButton />
         </div>
-        
+
         <div className="text-center py-12">
           <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No Study Plans Yet</h3>
@@ -197,7 +200,7 @@ const StudyPlansView: React.FC<StudyPlansViewProps> = ({ preview = false }) => {
 
           return (
             <Card key={plan._id} className="border-gray-200 shadow-sm">
-              <CardHeader 
+              <CardHeader
                 className="cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={() => togglePlanExpansion(plan._id)}
               >
@@ -213,16 +216,16 @@ const StudyPlansView: React.FC<StudyPlansViewProps> = ({ preview = false }) => {
                       <div className="flex items-center gap-4 mt-1">
                         <span className="text-sm text-gray-600">{plan.subject}</span>
                         <Badge variant="outline" className="text-xs">
-                          {plan.level}
+                          {plan.difficulty}
                         </Badge>
                         <span className="text-sm text-gray-500 flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {plan.duration}
+                          {`${plan.estimatedDuration} days`}
                         </span>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <div className="text-sm font-medium text-gray-900">
@@ -232,15 +235,15 @@ const StudyPlansView: React.FC<StudyPlansViewProps> = ({ preview = false }) => {
                         {Math.round(progressPercentage)}% Complete
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                       <div className="w-16 bg-gray-200 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${progressPercentage}%` }}
                         ></div>
                       </div>
-                      
+
                       {isExpanded ? (
                         <ChevronDown className="h-5 w-5 text-gray-400" />
                       ) : (
@@ -255,7 +258,7 @@ const StudyPlansView: React.FC<StudyPlansViewProps> = ({ preview = false }) => {
                 <CardContent className="pt-0">
                   <div className="border-t border-gray-200 pt-4">
                     <div className="grid gap-3">
-                      {days.map((day, dayIndex) => (
+                      {days.map((day) => (
                         <div
                           key={day.id}
                           className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${getStatusColor(day.status)}`}
@@ -267,13 +270,13 @@ const StudyPlansView: React.FC<StudyPlansViewProps> = ({ preview = false }) => {
                               <p className="text-sm opacity-75">{day.description}</p>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-4">
                             <div className="text-sm opacity-75 flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               {day.estimatedTime}h
                             </div>
-                            
+
                             {day.status !== 'completed' && (
                               <Button
                                 size="sm"
@@ -304,7 +307,10 @@ const StudyPlansView: React.FC<StudyPlansViewProps> = ({ preview = false }) => {
           onClose={() => setStudySessionOpen(null)}
           onComplete={() => {
             setStudySessionOpen(null);
-            loadStudyPlans(); // Refresh to show updated progress
+            // Add a small delay to ensure backend has processed the update
+            setTimeout(() => {
+              loadStudyPlans(); // Refresh to show updated progress
+            }, 500);
           }}
         />
       )}

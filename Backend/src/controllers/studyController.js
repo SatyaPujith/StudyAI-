@@ -403,6 +403,9 @@ class StudyController {
         dailyContent.timeSpent = (dailyContent.timeSpent || 0) + timeSpent;
       }
 
+      // Save the study plan with updated daily content
+      await studyPlan.save();
+
       // Update or create user progress using findOneAndUpdate with upsert
       let userProgress = await UserProgress.findOneAndUpdate(
         {
@@ -456,6 +459,8 @@ class StudyController {
 
       // Update overall study plan progress
       await studyPlan.updateProgress();
+      
+      logger.info(`Day ${dayNumber} progress updated for plan ${planId}: status=${status}, timeSpent=${timeSpent}`);
 
       // Update user stats
       const user = await User.findById(req.userId);

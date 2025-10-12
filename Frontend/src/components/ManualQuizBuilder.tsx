@@ -147,7 +147,6 @@ const ManualQuizBuilder: React.FC<ManualQuizBuilderProps> = ({
         isPublic
       };
       
-      console.log('Creating manual quiz with data:', quizData);
       const quiz = await dataService.createManualQuiz(quizData);
 
       if (quiz) {

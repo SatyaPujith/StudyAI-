@@ -56,11 +56,7 @@ const studyGroupSchema = new mongoose.Schema({
     type: String,
     trim: true,
     unique: true,
-    sparse: true,
-    default: function() {
-      // Generate a unique access code only for private groups
-      return this.isPublic ? undefined : Math.random().toString(36).substring(2, 8).toUpperCase();
-    }
+    sparse: true
   },
   
   // Meetings/Sessions

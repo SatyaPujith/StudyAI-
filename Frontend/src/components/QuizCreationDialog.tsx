@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 
@@ -35,11 +35,11 @@ const QuizCreationDialog: React.FC<QuizCreationDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Create Quiz: {topic}</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6 py-4">
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Generation Method</h3>
-            <RadioGroup defaultValue="ai" onValueChange={(value) => setUseAI(value === 'ai')}>
+            <RadioGroup defaultValue="ai" onValueChange={(value: string) => setUseAI(value === 'ai')}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="ai" id="ai" />
                 <Label htmlFor="ai" className="cursor-pointer">AI Generation (recommended)</Label>
@@ -53,7 +53,7 @@ const QuizCreationDialog: React.FC<QuizCreationDialogProps> = ({
 
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Quiz Privacy</h3>
-            <RadioGroup defaultValue="public" onValueChange={(value) => setIsPublic(value === 'public')}>
+            <RadioGroup defaultValue="public" onValueChange={(value: string) => setIsPublic(value === 'public')}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="public" id="public" />
                 <Label htmlFor="public" className="cursor-pointer">Public Quiz (visible to everyone)</Label>

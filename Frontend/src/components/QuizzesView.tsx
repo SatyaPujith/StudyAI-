@@ -87,10 +87,10 @@ const QuizzesView: React.FC<QuizzesViewProps> = ({ onStartQuiz }) => {
           questionCount: 10,
           isPublic
         });
-        
+
         if (quiz) {
           toast.success('Quiz created successfully!');
-          
+
           // Show access code for private quizzes
           if (!isPublic && quiz.accessCode) {
             toast.success(
@@ -98,7 +98,7 @@ const QuizzesView: React.FC<QuizzesViewProps> = ({ onStartQuiz }) => {
               { duration: 10000 }
             );
           }
-          
+
           setNewQuizTopic('');
           setNewQuizDifficulty('');
           setShowCreationDialog(false);
@@ -127,13 +127,13 @@ const QuizzesView: React.FC<QuizzesViewProps> = ({ onStartQuiz }) => {
 
     setShowCreationDialog(true);
   };
-  
+
   const joinQuizByCode = async () => {
     if (!joinCode.trim()) {
       toast.error('Please enter an access code');
       return;
     }
-    
+
     try {
       const result = await dataService.joinQuizByCode(joinCode);
       if (result && result.success) {
@@ -243,7 +243,7 @@ const QuizzesView: React.FC<QuizzesViewProps> = ({ onStartQuiz }) => {
           </div>
         </CardContent>
       </Card>
-      
+
       {showCreationDialog && (
         <QuizCreationDialog
           open={showCreationDialog}
@@ -254,7 +254,7 @@ const QuizzesView: React.FC<QuizzesViewProps> = ({ onStartQuiz }) => {
           creating={creating}
         />
       )}
-      
+
       {showJoinDialog && (
         <JoinQuizDialog
           open={showJoinDialog}
@@ -266,7 +266,7 @@ const QuizzesView: React.FC<QuizzesViewProps> = ({ onStartQuiz }) => {
           joining={false}
         />
       )}
-      
+
       {showManualBuilder && (
         <ManualQuizBuilder
           topic={newQuizTopic}
@@ -277,7 +277,7 @@ const QuizzesView: React.FC<QuizzesViewProps> = ({ onStartQuiz }) => {
           onSave={handleManualQuizSave}
         />
       )}
-      
+
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -356,28 +356,26 @@ const QuizzesView: React.FC<QuizzesViewProps> = ({ onStartQuiz }) => {
       </div>
     </div>
   );
-  
+
   // Add the handleManualQuizSave function inside the component
   async function handleManualQuizSave(quizData: any) {
     try {
-      console.log('Creating manual quiz with data:', quizData);
-      
       // Validate quiz data before sending
       if (!quizData.title || !quizData.topic || !quizData.difficulty || !quizData.questions) {
         toast.error('Missing required quiz data');
         return;
       }
-      
+
       if (!Array.isArray(quizData.questions) || quizData.questions.length === 0) {
         toast.error('Quiz must have at least one question');
         return;
       }
-      
+
       const quiz = await dataService.createManualQuiz(quizData);
-      
+
       if (quiz) {
         toast.success('Quiz created successfully!');
-        
+
         // Show access code for private quizzes
         if (!quizData.isPublic && quiz.accessCode) {
           toast.success(
@@ -385,7 +383,7 @@ const QuizzesView: React.FC<QuizzesViewProps> = ({ onStartQuiz }) => {
             { duration: 10000 }
           );
         }
-        
+
         setNewQuizTopic('');
         setNewQuizDifficulty('');
         setShowManualBuilder(false);
@@ -395,9 +393,15 @@ const QuizzesView: React.FC<QuizzesViewProps> = ({ onStartQuiz }) => {
       }
     } catch (error) {
       console.error('Error creating manual quiz:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to create quiz';
+      
+      // Type-safe error handling
+      let errorMessage = 'Failed to create quiz';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        errorMessage = axiosError.response?.data?.message || errorMessage;
+      }
+      
       toast.error(errorMessage);
-      toast.error('Failed to create quiz');
     }
   }
 };

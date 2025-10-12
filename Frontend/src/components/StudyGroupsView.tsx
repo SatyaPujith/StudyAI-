@@ -112,7 +112,6 @@ const StudyGroupsView: React.FC = () => {
     // Rate limiting: don't allow calls more than once every 2 seconds
     const now = Date.now();
     if (now - lastLoadTime < 2000) {
-      console.log('Rate limiting: skipping loadGroups call');
       return;
     }
     setLastLoadTime(now);
@@ -214,6 +213,19 @@ const StudyGroupsView: React.FC = () => {
       if (response.data.success) {
         const g = response.data.studyGroup;
         
+        // Show access code for private groups
+        if (!groupData.isPublic && g.accessCode) {
+          toast.success(
+            `Private group created! Access code: ${g.accessCode}`,
+            {
+              duration: 10000,
+              description: 'Share this code with others to let them join your private group.'
+            }
+          );
+        } else if (groupData.isPublic) {
+          toast.success('Public study group created successfully!');
+        }
+        
         // Return the original backend response for CreateGroupModal
         // We'll reload the groups after the modal handles scheduling
         setTimeout(() => {
@@ -226,6 +238,7 @@ const StudyGroupsView: React.FC = () => {
       }
     } catch (error) {
       console.error('Error creating group:', error);
+      toast.error('Failed to create study group. Please try again.');
       throw error;
     }
   };
@@ -271,7 +284,7 @@ const StudyGroupsView: React.FC = () => {
         <div className="flex gap-2">
           <input
             type="text"
-            placeholder="Enter session code to join"
+            placeholder="Enter group access code"
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value)}
             className="flex-1 px-3 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -282,33 +295,41 @@ const StudyGroupsView: React.FC = () => {
             onClick={async () => {
               try {
                 setIsJoiningByCode(true);
-                const res = await api.post('/study-groups/join-by-code', { code: joinCode.trim() });
+                const res = await api.post('/study-groups/join-by-code', { accessCode: joinCode.trim() });
+                
                 if (res.data?.success) {
-                  // Extract room name from URL if available
-                  const roomUrl = res.data.roomUrl || res.data.meetingLink || '';
-                  let meetingId = res.data.sessionId;
+                  const groupName = res.data?.studyGroup?.name || 'Study Group';
                   
-                  // If we have a room URL, extract the room name from it
-                  if (roomUrl && roomUrl.includes('.daily.co/')) {
-                    meetingId = roomUrl.split('.daily.co/')[1] || meetingId;
-                  }
-                  
-                  setHmsMeeting({
-                    isOpen: true,
-                    meetingId: meetingId,
-                    roomUrl: roomUrl,
-                    groupName: res.data.groupName || 'Study Group',
-                    groupId: res.data.groupId
+                  // Show success message
+                  toast.success(`Successfully joined "${groupName}"!`, {
+                    description: 'You can now participate in group discussions and meetings.'
                   });
+                  
+                  // Clear the join code
+                  setJoinCode('');
+                  
+                  // Reload groups to show the newly joined group
+                  await loadGroups();
+                } else {
+                  toast.error(res.data?.message || 'Failed to join group');
                 }
-              } catch (e) {
-                // Optionally show toast
+              } catch (error: any) {
+                console.error('Error joining by code:', error);
+                const errorMessage = error.response?.data?.message || 'Failed to join group';
+                
+                if (errorMessage.includes('not found')) {
+                  toast.error('Invalid access code. Please check and try again.');
+                } else if (errorMessage.includes('already a member')) {
+                  toast.error('You are already a member of this group.');
+                } else {
+                  toast.error(errorMessage);
+                }
               } finally {
                 setIsJoiningByCode(false);
               }
             }}
           >
-            Join by Code
+            {isJoiningByCode ? 'Joining...' : 'Join by Code'}
           </Button>
         </div>
       </div>

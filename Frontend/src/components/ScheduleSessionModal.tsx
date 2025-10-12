@@ -8,6 +8,18 @@ import { Calendar, Clock, Video } from 'lucide-react';
 import api from '../lib/api';
 import { toast } from 'sonner';
 
+// Helper function to extract error message
+const getErrorMessage = (error: unknown): string => {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const axiosError = error as any;
+    return axiosError.response?.data?.message || 'An error occurred';
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return 'An unknown error occurred';
+};
+
 interface ScheduleSessionModalProps {
   groupId: string;
   onClose: () => void;
@@ -73,7 +85,15 @@ const ScheduleSessionModal: React.FC<ScheduleSessionModalProps> = ({
       }
     } catch (error) {
       console.error('Error scheduling session:', error);
-      toast.error(error.response?.data?.message || 'Failed to schedule session');
+      
+      // Type-safe error handling
+      let errorMessage = 'Failed to schedule session';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        errorMessage = axiosError.response?.data?.message || errorMessage;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setScheduling(false);
     }

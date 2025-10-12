@@ -100,9 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (userData: any) => {
     try {
-      console.log('Attempting registration with:', userData);
       const response = await authAPI.register(userData);
-      console.log('Registration response:', response.data);
       
       const { token: newToken, user: newUser } = response.data;
       
